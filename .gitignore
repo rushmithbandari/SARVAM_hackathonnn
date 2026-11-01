@@ -1,0 +1,10 @@
+__pycache__/
+venv/
+shark_audio/
+webapp/audio/
+shark_tank_transcript.md
+output_*.wav
+*.pyc
+key.py
+*.wav
+.env
