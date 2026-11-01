@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦈 Shark Tank Simulator — Sarvam AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1a; --panel:rgba(255,255,255,.045); --line:rgba(255,255,255,.09);
+    --text:#e8ecf6; --muted:#8b93a7; --teal:#2dd4bf; --gold:#f5c04e;
+    --red:#f87171; --violet:#8b7cf6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;color:var(--text);background:var(--bg);
+    min-height:100vh;overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(600px 400px at 15% 10%, rgba(45,212,191,.12), transparent 60%),
+      radial-gradient(700px 500px at 85% 20%, rgba(139,124,246,.12), transparent 60%),
+      radial-gradient(900px 600px at 50% 100%, rgba(245,192,78,.07), transparent 60%);
+  }
+  h1,h2,h3,.brand{font-family:'Space Grotesk',sans-serif}
+  button{font-family:inherit;cursor:pointer}
+  ::-webkit-scrollbar{width:8px} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px}
+
+  /* ---------- setup screen ---------- */
+  #setup{max-width:760px;margin:0 auto;padding:7vh 24px 60px;animation:rise .5s ease}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--teal);border:1px solid rgba(45,212,191,.35);
+    padding:7px 14px;border-radius:99px;background:rgba(45,212,191,.08);margin-bottom:22px;
+  }
+  #setup h1{font-size:clamp(34px,6vw,56px);line-height:1.05;letter-spacing:-.02em}
+  #setup h1 .grad{background:linear-gradient(92deg,var(--gold),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:16px;line-height:1.65;margin:18px 0 34px;max-width:560px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px;backdrop-filter:blur(8px)}
+  .lbl{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  input[type=text]{
+    width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;
+    color:var(--text);padding:13px 16px;font-size:15px;outline:none;transition:border .2s;
+  }
+  input[type=text]:focus{border-color:var(--teal)}
+  .langs{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .chip{
+    border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);
+    padding:9px 15px;border-radius:99px;font-size:13.5px;transition:all .18s;
+  }
+  .chip:hover{border-color:rgba(45,212,191,.5)}
+  .chip.on{background:rgba(45,212,191,.15);border-color:var(--teal);color:var(--teal);font-weight:600}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:6px}
+  .seg button{background:transparent;border:0;color:var(--muted);padding:10px 18px;font-size:14px}
+  .seg button.on{background:rgba(45,212,191,.15);color:var(--teal);font-weight:600}
+  .cta{
+    margin-top:26px;width:100%;border:0;border-radius:14px;padding:17px;font-size:17px;font-weight:700;
+    color:#081018;background:linear-gradient(92deg,var(--gold),#f0a94e);
+    box-shadow:0 10px 30px rgba(245,192,78,.25);transition:transform .15s, box-shadow .2s;
+  }
+  .cta:hover{transform:translateY(-2px);box-shadow:0 14px 38px rgba(245,192,78,.35)}
+
+  /* ---------- stage ---------- */
+  #stage{display:none;max-width:1180px;margin:0 auto;padding:22px 20px 80px}
+  header{display:flex;align-items:center;gap:14px;padding:6px 2px 18px;flex-wrap:wrap}
+  .brand{font-size:19px;font-weight:700;display:flex;align-items:center;gap:9px}
+  .pill{
+    border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:99px;
+    padding:7px 14px;font-size:12.5px;display:inline-flex;align-items:center;gap:7px;transition:border .2s;
+  }
+  button.pill:hover{border-color:var(--teal);color:var(--text)}
+  .spacer{flex:1}
+  .grid{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+  .sharks{display:flex;flex-direction:column;gap:12px;position:sticky;top:20px}
+  .shark{
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;
+    display:flex;gap:13px;align-items:center;transition:all .35s;position:relative;overflow:hidden;
+  }
+  .shark.speaking{border-color:rgba(45,212,191,.65);box-shadow:0 0 34px rgba(45,212,191,.22);transform:scale(1.02)}
+  .avatar{
+    width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:24px;flex-shrink:0;
+    background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent),var(--av,#233);
+    border:1px solid rgba(255,255,255,.15);
+  }
+  .shark .nm{font-weight:700;font-size:15px}
+  .shark .tg{font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-top:2px}
+  .eq{display:none;gap:3px;align-items:flex-end;height:16px;margin-left:auto}
+  .shark.speaking .eq{display:flex}
+  .eq i{width:3.5px;background:var(--teal);border-radius:2px;animation:eq 1s ease-in-out infinite}
+  .eq i:nth-child(2){animation-delay:.18s}.eq i:nth-child(3){animation-delay:.36s}.eq i:nth-child(4){animation-delay:.1s}
+  @keyframes eq{0%,100%{height:4px}50%{height:15px}}
+
+  .feed{
+    background:var(--panel);border:1px solid var(--line);border-radius:20px;min-height:420px;
+    max-height:56vh;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:13px;
+  }
+  .bubble{max-width:82%;padding:13px 16px;border-radius:16px;font-size:14.5px;line-height:1.55;animation:rise .35s ease}
+  .bubble .who{font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;font-weight:600}
+  .founder{align-self:flex-end;background:rgba(45,212,191,.13);border:1px solid rgba(45,212,191,.3);border-bottom-right-radius:5px}
+  .founder .who{color:var(--teal)}
+  .sharkb{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid var(--line);border-bottom-left-radius:5px}
+  .sharkb .who{color:var(--gold)}
+  .cue{display:inline-block;background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.4);
+       font-size:10.5px;padding:2px 9px;border-radius:99px;margin-left:7px;vertical-align:1px}
+  .sysmsg{align-self:center;font-size:12px;color:var(--muted);background:rgba(255,255,255,.03);
+          border:1px dashed var(--line);padding:6px 14px;border-radius:99px}
+  .typing{align-self:flex-start;color:var(--muted);font-size:13px;display:none;gap:5px;align-items:center}
+  .typing.on{display:inline-flex}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite}
+  .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+  /* ---------- mic console ---------- */
+  .console{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .orb{
+    width:92px;height:92px;border-radius:50%;border:0;position:relative;font-size:30px;color:#081018;
+    background:radial-gradient(circle at 32% 28%, #7ef0dd, var(--teal) 60%, #14a895);
+    box-shadow:0 8px 30px rgba(45,212,191,.35);transition:transform .15s;
+  }
+  .orb:hover{transform:scale(1.05)}
+  .orb:disabled{filter:grayscale(.7) brightness(.6);cursor:not-allowed;transform:none}
+  .orb.rec{background:radial-gradient(circle at 32% 28%, #ffb3b3, var(--red) 60%, #c2413e);box-shadow:0 0 0 0 rgba(248,113,113,.5);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(248,113,113,.45)}70%{box-shadow:0 0 0 26px rgba(248,113,113,0)}100%{box-shadow:0 0 0 0 rgba(248,113,113,0)}}
+  .rings{position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(45,212,191,.4);animation:ring 1.6s infinite;display:none}
+  .orb.rec .rings{display:block}
+  @keyframes ring{from{transform:scale(1);opacity:.8}to{transform:scale(1.55);opacity:0}}
+  .hint{font-size:13.5px;color:var(--muted)}
+  .hint b{color:var(--text)}
+  .bars{display:flex;gap:4px;align-items:flex-end;height:26px;visibility:hidden}
+  .bars.on{visibility:visible}
+  .bars i{width:5px;border-radius:3px;background:linear-gradient(180deg,var(--teal),var(--violet));height:5px;transition:height .08s}
+  .typerow{display:flex;gap:9px;width:100%;max-width:560px}
+  .typerow input{flex:1}
+  .send{border:0;border-radius:12px;background:rgba(45,212,191,.15);color:var(--teal);border:1px solid rgba(45,212,191,.4);padding:0 18px;font-size:14px;font-weight:600}
+  .mini{display:flex;gap:9px}
+
+  /* ---------- verdicts ---------- */
+  #verdicts{display:none;margin-top:18px}
+  .vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:14px}
+  .vcard{
+    background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;
+    opacity:0;transform:translateY(24px) scale(.96);transition:all .55s cubic-bezier(.2,.8,.25,1);position:relative;
+  }
+  .vcard.show{opacity:1;transform:none}
+  .vcard.invest{border-color:rgba(245,192,78,.55);box-shadow:0 0 36px rgba(245,192,78,.14);background:linear-gradient(160deg,rgba(245,192,78,.09),var(--panel))}
+  .vcard .vd{font-family:'Space Grotesk';font-size:24px;font-weight:700}
+  .vcard.invest .vd{color:var(--gold)}
+  .vcard.out .vd{color:var(--red)}
+  .vcard .deal{margin-top:9px;font-size:15px;font-weight:600;color:var(--gold)}
+  .vcard .txt{margin-top:11px;font-size:13.5px;color:var(--muted);line-height:1.55}
+  .stamp{
+    position:absolute;top:14px;right:14px;font-size:10px;letter-spacing:.16em;border:1.5px solid;
+    padding:3px 9px;border-radius:6px;transform:rotate(6deg);font-weight:700;
+  }
+  .invest .stamp{color:var(--gold);border-color:var(--gold)}
+  .out .stamp{color:var(--red);border-color:var(--red)}
+  .total{
+    margin-top:16px;text-align:center;padding:20px;border-radius:20px;
+    background:linear-gradient(92deg,rgba(245,192,78,.14),rgba(45,212,191,.1));
+    border:1px solid rgba(245,192,78,.4);opacity:0;transition:opacity .6s;
+  }
+  .total.show{opacity:1}
+  .total b{font-family:'Space Grotesk';font-size:30px;color:var(--gold)}
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+
+  #toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:#161c2e;border:1px solid var(--line);color:var(--text);padding:12px 20px;
+    border-radius:12px;font-size:14px;transition:transform .3s;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5);
+  }
+  #toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* ---------- language modal ---------- */
+  #langModal{position:fixed;inset:0;background:rgba(4,7,14,.72);backdrop-filter:blur(4px);display:none;place-items:center;z-index:40}
+  #langModal.on{display:grid}
+  .sheet{background:#111726;border:1px solid var(--line);border-radius:20px;padding:26px;width:min(520px,92vw);max-height:80vh;overflow-y:auto}
+  .sheet h3{margin-bottom:16px;font-size:18px}
+
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .phase{font-size:13px;color:var(--muted);padding:10px 2px;letter-spacing:.02em}
+  .phase b{color:var(--teal)}
+</style>
+</head>
+<body>
+
+<!-- ══════════ SETUP ══════════ -->
+<section id="setup">
+  <span class="badge">🦈 Powered by Sarvam AI</span>
+  <h1>Face the sharks.<br><span class="grad">In your own language.</span></h1>
+  <p class="sub">Pitch your startup <b>out loud</b> — three AI sharks with distinct voices will grill you, interrupt you, fight over your deal, and give a final verdict. Hinglish se Telugu tak, sab chalega.</p>
+  <div class="card">
+    <div class="row">
+      <div><p class="lbl">Founder name</p><input type="text" id="founder" placeholder="Rushmith"></div>
+      <div><p class="lbl">Startup name</p><input type="text" id="company" placeholder="ChaiAdda"></div>
+    </div>
+    <p class="lbl" style="margin-top:20px">Show language</p>
+    <div class="langs" id="langs"></div>
+    <p class="lbl" style="margin-top:20px">Grill intensity</p>
+    <div class="seg" id="rounds">
+      <button data-v="1" class="on">1 question / shark</button>
+      <button data-v="2">2 questions / shark</button>
+    </div>
+    <button class="cta" id="enterBtn">🎬 &nbsp;Enter the Tank</button>
+  </div>
+</section>
+
+<!-- ══════════ STAGE ══════════ -->
+<section id="stage">
+  <header>
+    <span class="brand">🦈 Shark Tank Simulator</span>
+    <span class="pill" id="whoPill"></span>
+    <span class="spacer"></span>
+    <button class="pill" id="langBtn">🌐 <span id="langLabel">Hinglish</span></button>
+    <button class="pill" id="restartBtn">🔁 New pitch</button>
+  </header>
+  <div class="phase" id="phase">📢 <b>The pitch</b> — the tank is silent. Bhai, shuru karo.</div>
+
+  <div class="grid">
+    <aside class="sharks" id="sharkPanel"></aside>
+    <div>
+      <div class="feed" id="feed">
+        <div class="sysmsg">🎙️ Press the mic and deliver your pitch — or type it below</div>
+        <div class="typing" id="typing"><span>sharks are thinking</span><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+      </div>
+
+      <div class="console">
+        <button class="orb" id="orb"><span class="rings"></span>🎤</button>
+        <div class="bars" id="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="hint" id="hint"><b>Tap to pitch</b> — press again to stop</div>
+        <div class="typerow">
+          <input type="text" id="typeInput" placeholder="…or type your pitch / answer">
+          <button class="send" id="sendBtn">Send</button>
+        </div>
+        <div class="mini" id="miniControls" style="display:none">
+          <button class="pill" id="verdictBtn">⏭️ Skip to verdicts</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="verdicts">
+    <h2 style="font-size:22px">⚖️ Final verdicts</h2>
+    <div class="vgrid" id="vgrid"></div>
+    <div class="total" id="total"></div>
+    <div style="text-align:center;margin-top:18px">
+      <button class="pill" id="againBtn" style="font-size:14px;padding:11px 22px">🎬 Pitch again</button>
+    </div>
+  </section>
+</section>
+
+<div id="langModal"><div class="sheet"><h3>🌐 Switch the show language</h3><div class="langs" id="langList" style="flex-direction:column;align-items:stretch"></div></div></div>
+<div id="toast"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+/* ═══════════════ state ═══════════════ */
+const $ = id => document.getElementById(id);
+let sid = null, phase = "setup", langKey = "1", langLabel = "Hinglish",
+    rounds = 1, recording = false, media = null, ac = null, analyser = null, rafId = null;
+const SHARK_META = {
+  "Karan Mehra":  {emoji:"🗡️", color:"#7f1d1d"},
+  "Vikram Rao":   {emoji:"🚀", color:"#1e3a5f"},
+  "Naina Kapoor": {emoji:"💎", color:"#4c1d95"},
+};
+let audioCtx = null; // unlocked on first gesture
+
+/* ═══════════════ helpers ═══════════════ */
+function toast(msg, ms=2600){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), ms);
+}
+function bubble(html, cls){
+  const d = document.createElement("div");
+  d.className = "bubble " + cls; d.innerHTML = html;
+  $("feed").insertBefore(d, $("typing"));
+  $("feed").scrollTop = $("feed").scrollHeight;
+  return d;
+}
+function setPhase(html){ $("phase").innerHTML = html; }
+function thinking(on){ $("typing").classList.toggle("on", on); }
+async function playAudio(url){
+  return new Promise((res, rej) => {
+    const a = new Audio(url);
+    a.onended = res; a.onerror = () => { console.warn("audio failed", url); res(); };
+    a.play().catch(()=>res());
+  });
+}
+function cardFor(name){ return [...document.querySelectorAll(".shark")].find(c => c.dataset.name === name); }
+async function speakLine(line, cueOverride){
+  const card = cardFor(line.name);
+  card?.classList.add("speaking");
+  const cue = cueOverride ?? line.cue;
+  bubble(
+    `<div class="who">${line.name} — ${line.tag}${cue ? `<span class="cue">✂️ ${cue}</span>` : ""}</div>${line.text}`,
+    "sharkb"
+  );
+  await playAudio(line.audio);
+  card?.classList.remove("speaking");
+}
+
+/* ═══════════════ setup screen ═══════════════ */
+async function loadLangs(){
+  try{
+    const langs = await (await fetch("/api/languages")).json();
+    for (const target of [$("langs"), $("langList")]) target.innerHTML = "";
+    for (const l of langs){
+      for (const target of [$("langs"), $("langList")]){
+        const b = document.createElement("button");
+        b.className = "chip" + (l.key === langKey ? " on" : "");
+        b.textContent = l.label; b.dataset.key = l.key;
+        b.onclick = () => selectLang(l.key, l.label);
+        target.appendChild(b);
+      }
+    }
+  }catch(e){ showServerBanner(); }
+}
+function showServerBanner(){
+  const n = document.createElement("div");
+  n.style.cssText = "margin:0 0 18px;padding:14px 18px;border-radius:14px;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.45);font-size:14px;line-height:1.6";
+  n.innerHTML = "⚠️ <b>Backend not running.</b> In Terminal, run:<br>"
+    + "<code style='background:rgba(255,255,255,.08);padding:3px 8px;border-radius:6px'>cd ~/Desktop/sarvam-test && ./venv/bin/python webapp/app.py</code><br>"
+    + "then open <b>http://localhost:5050</b> (not the file directly).";
+  $("setup").prepend(n);
+}
+if (location.protocol === "file:") showServerBanner();
+function selectLang(key, label){
+  langKey = key; langLabel = label;
+  document.querySelectorAll("#langs .chip, #langList .chip").forEach(c =>
+    c.classList.toggle("on", c.dataset.key === key));
+  if (sid && phase !== "setup"){
+    fetch("/api/switch_lang", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({session_id: sid, lang: key})})
+      .then(()=>{ toast(`🌐 Sharks now speak ${label}`); $("langLabel").textContent = label; });
+  } else { $("langLabel").textContent = label; }
+  $("langModal").classList.remove("on");
+}
+$("rounds").querySelectorAll("button").forEach(b => b.onclick = () => {
+  rounds = +b.dataset.v;
+  $("rounds").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+});
+$("langBtn").onclick = () => $("langModal").classList.add("on");
+$("langModal").onclick = e => { if (e.target.id === "langModal") e.target.classList.remove("on"); };
+
+$("enterBtn").onclick = async () => {
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx.resume?.();
+    const r = await fetch("/api/start", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({founder: $("founder").value, company: $("company").value, lang: langKey, rounds})});
+    if (!r.ok) throw new Error("start failed");
+    const d = await r.json(); sid = d.session_id;
+    // shark panel
+    $("sharkPanel").innerHTML = "";
+    for (const [name, meta] of Object.entries(SHARK_META)){
+      const tag = name === "Karan Mehra" ? "The Blade" : name === "Vikram Rao" ? "The Growth Hawk" : "The Brand Builder";
+      $("sharkPanel").insertAdjacentHTML("beforeend",
+        `<div class="shark" data-name="${name}" style="--av:${meta.color}">
+          <div class="avatar">${meta.emoji}</div>
+          <div><div class="nm">${name}</div><div class="tg">${tag}</div></div>
+          <div class="eq"><i></i><i></i><i></i><i></i></div>
+        </div>`);
+    }
+    $("whoPill").textContent = `👤 ${$("founder").value || "Founder"} × ${$("company").value || "the startup"}`;
+    $("setup").style.display = "none"; $("stage").style.display = "block";
+    window.scrollTo(0, 0);
+  }catch(e){
+    toast("⚠️ Can't reach the server — is webapp/app.py running?", 4200);
+    showServerBanner();
+  }
+};
+$("restartBtn").onclick = $("againBtn").onclick = () => location.reload();
+
+/* ═══════════════ mic: PCM capture -> 16k wav ═══════════════ */
+async function startRec(){
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: {channelCount:1, echoCancellation:true, noiseSuppression:true}});
+  media = stream;
+  ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+  await ac.resume();
+  const src = ac.createMediaStreamSource(stream);
+  analyser = ac.createAnalyser(); analyser.fftSize = 256; src.connect(analyser);
+  const proc = ac.createScriptProcessor(4096, 1, 1);
+  window._chunks = [];
+  proc.onaudioprocess = e => window._chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+  src.connect(proc);
+  window._silent = ac.createGain(); window._silent.gain.value = 0;
+  proc.connect(window._silent); window._silent.connect(ac.destination);
+  window._proc = proc; window._src = src;
+  drawBars();
+}
+function stopRec(){
+  try{ window._proc.disconnect(); window._src.disconnect(); }catch(e){}
+  media?.getTracks().forEach(t => t.stop());
+  cancelAnimationFrame(rafId); $("bars").classList.remove("on");
+  const factor = Math.max(1, Math.round(ac.sampleRate / 16000));
+  const flat = [];
+  for (const c of window._chunks) for (let i = 0; i < c.length; i += factor){
+    let s = 0, n = 0;
+    for (let j = i; j < Math.min(i + factor, c.length); j++){ s += c[j]; n++; }
+    flat.push(s / n);
+  }
+  const len = flat.length;
+  if (len < 8000) return null; // < 0.5s @16k
+  const buf = new ArrayBuffer(44 + len * 2), v = new DataView(buf);
+  const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  ws(0, "RIFF"); v.setUint32(4, 36 + len * 2, true); ws(8, "WAVE");
+  ws(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 16000, true); v.setUint32(28, 32000, true); v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true); ws(36, "data"); v.setUint32(40, len * 2, true);
+  for (let i = 0; i < len; i++){
+    const s = Math.max(-1, Math.min(1, flat[i]));
+    v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+  return new Blob([buf], {type: "audio/wav"});
+}
+function drawBars(){
+  $("bars").classList.add("on");
+  const els = $("bars").children, data = new Uint8Array(analyser.frequencyBinCount);
+  (function loop(){
+    analyser.getByteFrequencyData(data);
+    for (let i = 0; i < els.length; i++)
+      els[i].style.height = Math.max(4, data[i * 4] / 255 * 26) + "px";
+    rafId = requestAnimationFrame(loop);
+  })();
+}
+
+/* ═══════════════ orb states ═══════════════ */
+function orbState(mode, text){
+  const orb = $("orb"), hint = $("hint");
+  orb.classList.toggle("rec", mode === "rec");
+  orb.disabled = mode === "busy";
+  if (mode === "idle") { orb.innerHTML = '<span class="rings"></span>🎤'; hint.innerHTML = text || "<b>Tap to speak</b> — press again to stop"; }
+  if (mode === "rec")  { orb.textContent = "⏹"; hint.innerHTML = "<b>Listening…</b> tap to stop"; }
+  if (mode === "busy") { orb.textContent = "⏳"; hint.innerHTML = text || "The tank is thinking…"; }
+}
+$("orb").onclick = async () => {
+  if (phase === "done" || phase === "deliberating" || phase === "ready_verdicts") return;
+  if (!recording){
+    recording = true; orbState("rec");
+    try { await startRec(); } catch(e){ recording = false; orbState("idle"); toast("🎤 Mic blocked — allow access or type below"); }
+  } else {
+    recording = false; orbState("busy", "Transcribing…");
+    const blob = stopRec();
+    if (!blob){ orbState("idle"); toast("Too short — nothing captured"); return; }
+    await submitTurn(blob);
+  }
+};
+$("sendBtn").onclick = async () => {
+  const text = $("typeInput").value.trim();
+  if (!text || phase === "done" || phase === "deliberating" || phase === "ready_verdicts") return;
+  $("typeInput").value = ""; orbState("busy");
+  await submitTurn(null, text);
+};
+$("typeInput").addEventListener("keydown", e => { if (e.key === "Enter") $("sendBtn").click(); });
+
+async function submitTurn(blob, typed){
+  thinking(true);
+  try{
+    const fd = new FormData(); fd.append("session_id", sid);
+    if (blob) fd.append("audio", blob, "pitch.wav");
+    if (typed) fd.append("text", typed);
+    const url = phase === "await_pitch" ? "/api/pitch" : "/api/answer";
+    const r = await fetch(url, {method:"POST", body: fd});
+    const d = await r.json();
+    thinking(false);
+    if (!r.ok){ toast(d.error || "Something went wrong"); orbState("idle"); return; }
+    bubble(`<div class="who">You</div>${d.heard}`, "founder");
+    orbState("busy", "Sharks responding…");
+    if (phase === "await_pitch") setPhase("🎤 <b>Grilling</b> — answer each shark, or type");
+    phase = d.next === "deliberate" ? "ready_deliberate" : "grill";
+    $("miniControls").style.display = phase === "grill" ? "flex" : "none";
+    for (const line of d.lines) await speakLine(line);
+    if (d.next === "deliberate") runFinale();
+    else orbState("idle");
+  }catch(e){ thinking(false); orbState("idle"); toast("Network hiccup — try again"); }
+}
+
+/* ═══════════════ finale ═══════════════ */
+$("verdictBtn").onclick = async () => {
+  if (phase !== "grill") return;
+  if (!confirm("Leave the pitch early and jump to verdicts?")) return;
+  phase = "ready_deliberate"; $("miniControls").style.display = "none"; runFinale(true);
+};
+async function runFinale(early){
+  orbState("busy");
+  setPhase(early ? "⏭️ <b>Early exit</b> — the tank has heard enough" : "🤝 <b>Deliberation</b> — the sharks interrupt each other");
+  bubble(`<div class="sysmsg" style="align-self:center">🤝 Deliberation begins…</div>`, "sysmsg");
+  const d = await (await fetch("/api/deliberate", {method:"POST",
+    headers:{"Content-Type":"application/json"}, body: JSON.stringify({session_id: sid})})).json();
+  for (const line of d.lines) await speakLine(line);
+
+  setPhase("⚖️ <b>Verdicts</b> — the judges decide…");
+  bubble(`<div class="sysmsg" style="align-self:center">⚖️ Verdicts incoming…</div>`, "sysmsg");
+  const v = await (await fetch("/api/verdicts", {method:"POST",
+    headers:{"Content-Type":"application/json"}, body: JSON.stringify({session_id: sid})})).json();
+
+  phase = "done"; orbState("idle", "Show over 🦈");
+  $("verdicts").style.display = "block";
+  let delay = 0;
+  for (const vd of v.verdicts){
+    const card = document.createElement("div");
+    card.className = "vcard " + (vd.decision === "INVEST" ? "invest" : "out");
+    card.innerHTML = `
+      <span class="stamp">${vd.decision}</span>
+      <div class="vd">${vd.decision === "INVEST" ? "💰" : "🚫"} ${vd.name}</div>
+      ${vd.decision === "INVEST" ? `<div class="deal">₹${vd.amount_lakh} lakh for ${vd.equity_pct}% equity</div>` : ""}
+      <div class="txt">"${vd.text}"</div>`;
+    $("vgrid").appendChild(card);
+    setTimeout(() => card.classList.add("show"), delay); delay += 650;
+    (async () => { await playAudio(vd.audio); })();
+  }
+  setTimeout(() => {
+    $("total").innerHTML = v.total > 0
+      ? `💰 Total on the table: <b>₹${v.total} lakh</b> — not bad, ${"founder"}!`
+      : `😅 No deals today. The tank is brutal — pitch again!`;
+    $("total").classList.add("show");
+    if (v.total > 0) confetti();
+    $("verdicts").scrollIntoView({behavior:"smooth"});
+  }, delay + 300);
+}
+
+/* ═══════════════ confetti ═══════════════ */
+function confetti(){
+  const c = $("confetti"), x = c.getContext("2d");
+  c.width = innerWidth; c.height = innerHeight;
+  const colors = ["#f5c04e", "#2dd4bf", "#8b7cf6", "#ffffff"];
+  const P = Array.from({length: 140}, () => ({
+    x: Math.random() * c.width, y: -20 - Math.random() * c.height * .4,
+    r: 3 + Math.random() * 5, vy: 2 + Math.random() * 3.5, vx: -1.5 + Math.random() * 3,
+    col: colors[Math.floor(Math.random() * 4)], rot: Math.random() * 6
+  }));
+  let t = 0;
+  (function loop(){
+    x.clearRect(0, 0, c.width, c.height); t++;
+    for (const p of P){
+      p.x += p.vx; p.y += p.vy; p.rot += .08;
+      x.save(); x.translate(p.x, p.y); x.rotate(p.rot);
+      x.fillStyle = p.col; x.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 1.6); x.restore();
+    }
+    if (t < 260) requestAnimationFrame(loop); else x.clearRect(0, 0, c.width, c.height);
+  })();
+}
+
+loadLangs();
+</script>
+</body>
+</html>
